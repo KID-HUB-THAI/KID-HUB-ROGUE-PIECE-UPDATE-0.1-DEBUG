@@ -287,7 +287,7 @@ local function enableFly(character, target)
         alignPos = Instance.new("AlignPosition")
         alignPos.Attachment0 = att0
         alignPos.Attachment1 = att1
-        alignPos.RigidityEnabled = true
+        alignPos.RigidityEnabled = truerue
         alignPos.MaxForce = 200000
         alignPos.Parent = hrp
 
@@ -354,58 +354,122 @@ Tab:CreateDropdown({
             print("Selected Island:", option)
         end
     end
-}, "IslandDropdown")
+}, "IslandDropdown"
 
--- ===== Services =====
+-- ================= TAB =================
+local Tap = Window:CreateTab({
+    Name = "Fly System",
+    Icon = "view_in_ar",
+    ImageSource = "Material",
+    ShowTitle = true
+	})
+
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- ===== State =====
-local SelectedMob = nil
+getgenv().AutoFarm = false
+getgenv().FlyDistance = 10
+getgenv().TargetMob = nil
 
--- ===== หา list ชื่อมอนทั้งหมดในแมพ =====
-local function getAllMobs()
-    local mobs = {}
+-- โฟลเดอร์มอน/เกาะ
+local CharactersFolder = workspace:WaitForChild("Main"):WaitForChild("Characters")
 
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
-            if not table.find(mobs, v.Name) then
-                table.insert(mobs, v.Name)
+	local noclipConn
+
+local function setNoClip(state)
+    if state then
+        if noclipConn then return end
+        noclipConn = RunService.Stepped:Connect(function()
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
             end
+        end)
+    else
+        if noclipConn then
+            noclipConn:Disconnect()
+            noclipConn = nil
         end
     end
+	end
 
-    table.sort(mobs)
-    return mobs
-end
-
--- ===== หาโมเดลมอนตามชื่อ =====
-local function findMobByName(name)
-    for _, v in ipairs(workspace:GetDescendants()) do
+local function findMob(name)
+    if not name then return end
+    for _, v in ipairs(CharactersFolder:GetDescendants()) do
         if v:IsA("Model") and v.Name == name then
-            if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Humanoid") then
+            local hrp = v:FindFirstChild("HumanoidRootPart")
+            local hum = v:FindFirstChildOfClass("Humanoid")
+            if hrp and hum and hum.Health > 0 then
                 return v
             end
         end
     end
+	end
+
+local function tpAndLookDown(char, mob)
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local mobHRP = mob:FindFirstChild("HumanoidRootPart")
+    if not mobHRP then return end
+
+    local pos = mobHRP.Position + Vector3.new(0, getgenv().FlyDistance, 0)
+
+    -- หันหน้าลงตลอด (ก้ม -90 องศา)
+    hrp.CFrame =
+        CFrame.new(pos, mobHRP.Position)
+        CFrame.Angles(math.rad(-90), 0, 0)
+	end
+
+-- ===== Auto TP + Fly + Look Down Button =====
+Tab:CreateButton({
+    Name = "Auto TP Mob (Look Down)",
+    Callback = function()
+        getgenv().AutoFarm = not getgenv().AutoFarm
+
+        if getgenv().AutoFarm then
+            print("Auto TP : ON")
+            task.spawn(autoFarmLoop)
+        else
+            print("Auto TP : OFF")
+        end
+    end
+})
+
+-- ===== เลือกมอน =====
+local function getAllMobs()
+    local mobs = {}
+    for _, v in ipairs(CharactersFolder:GetChildren()) do
+        if v:IsA("Model") then
+            table.insert(mobs, v.Name)
+        end
+    end
+    table.sort(mobs)
+    return mobs
 end
 
--- ===== วาปไปหามอน =====
-local function teleportToMob(name)
-    if not name then
-        warn("ยังไม่ได้เลือกมอน")
-        return
+Tab:CreateDropdown({
+    Name = "Select Mob",
+    Options = getAllMobs(),
+    CurrentOption = nil,
+    MultipleOptions = false,
+    Callback = function(option)
+        getgenv().TargetMob = option
+        print("Target Mob:", option)
     end
+}, "MobDropdown")
 
-    local mob = findMobByName(name)
-    if not mob then
-        warn("ไม่พบมอน:", name)
-        return
+-- ===== ระยะบินเหนือหัว =====
+Tab:CreateSlider({
+    Name = "Fly Distance",
+    Range = {0, 100},
+    Increment = 2,
+    CurrentValue = getgenv().FlyDistance,
+    Callback = function(Value)
+        getgenv().FlyDistance = Value
     end
-
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local hrp = character:WaitForChild("HumanoidRootPart")
-
-    hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-end
+})
 
