@@ -28,7 +28,7 @@ local Window = Luna:CreateWindow({
 	}
 })
 local Tab = Window:CreateTab({
-	Name = "Tab Example",
+	Name = "Main",
 	Icon = "view_in_ar",
 	ImageSource = "Material",
 	ShowTitle = true -- This will determine whether the big header text in the tab will show
@@ -172,193 +172,13 @@ Tab:CreateButton({
 		end
 	end
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
-
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
-
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- 1
--- 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 -- ================= TAB =================
-local Tab = Window:CreateTab({
-    Name = "Fly + Teleport System",
+local Tap = Window:CreateTab({
+    Name = "Teleport System",
     Icon = "view_in_ar",
     ImageSource = "Material",
     ShowTitle = true
-})
+	})
 
 -- ================= SERVICES =================
 local Players = game:GetService("Players")
@@ -589,23 +409,3 @@ local function teleportToMob(name)
     hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
 end
 
-Tab:CreateButton({
-    Name = "Teleport to Mob",
-    Callback = function()
-        teleportToMob(SelectedMob)
-    end
-})
-
--- ===== UI =====
-Tab:CreateDropdown({
-    Name = "Select Mob",
-    Options = getAllMobs(),
-    CurrentOption = nil,
-    MultipleOptions = false,
-    Callback = function(option)
-        if type(option) == "string" then
-            SelectedMob = option
-            print("Selected Mob:", option)
-        end
-    end
-}, "MobDropdown")
